@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Do Nothing Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      font-size: 16px;
+      margin: 5px;
+      padding: 5px;
+    }
+    #leaderboard {
+      margin-top: 20px;
+      border-top: 1px solid white;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Do Nothing Challenge</h1>
+  <p id="instructions">Enter your name and press any key to begin doing <span style="color:#FFFFFF">Nothing</span>.<br>Don't move, touch, or press anything!</p>
+
+  <input id="username" placeholder="Enter your name" />
+  <button onclick="startGame()">Start</button>
+  <button onclick="resetGame()">Restart</button>
+
+  <p id="status"></p>
+  <p id="timer"></p>
+
+  <div id="leaderboard">
+    <h3>Leaderboard</h3>
+    <ol id="scores"></ol>
+  </div>
+
+  <script>
+    let startTime, gameRunning = false, inactivityTimer;
+    let timerDisplay = document.getElementById("timer");
+    let statusDisplay = document.getElementById("status");
+    let nameInput = document.getElementById("username");
+    let scoresList = document.getElementById("scores");
+
+    function startGame() {
+      if (!nameInput.value.trim()) {
+        alert("Please enter your name first!");
+        return;
+      }
+      document.addEventListener("keydown", endGame);
+      document.addEventListener("mousemove", endGame);
+      document.addEventListener("mousedown", endGame);
+      document.addEventListener("touchstart", endGame);
+      document.addEventListener("scroll", endGame);
+
+      startTime = Date.now();
+      gameRunning = true;
+      statusDisplay.textContent = `You are now doing NOTHING...`;
+      nameInput.disabled = true;
+      updateTimer();
+    }
+
+    function updateTimer() {
+      if (!gameRunning) return;
+      let elapsed = Math.floor((Date.now() - startTime) / 1000);
+      timerDisplay.textContent = `Time: ${formatTime(elapsed)}`;
+      inactivityTimer = setTimeout(updateTimer, 1000);
+    }
+
+    function endGame() {
+      if (!gameRunning) return;
+      gameRunning = false;
+      clearTimeout(inactivityTimer);
+      let elapsed = Math.floor((Date.now() - startTime) / 1000);
+      statusDisplay.textContent = `You moved! You did Something. You did Nothing for ${formatTime(elapsed)}.`;
+      saveScore(nameInput.value, elapsed);
+      showScores();
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}m ${secs}s`;
+    }
+
+    function saveScore(name, score) {
+      let scores = JSON.parse(localStorage.getItem("nothingScores") || "[]");
+      scores.push({ name, score });
+      scores.sort((a, b) => b.score - a.score);
+      scores = scores.slice(0, 10);
+      localStorage.setItem("nothingScores", JSON.stringify(scores));
+    }
+
+    function showScores() {
+      let scores = JSON.parse(localStorage.getItem("nothingScores") || "[]");
+      scoresList.innerHTML = "";
+      scores.forEach(s => {
+        let li = document.createElement("li");
+        li.textContent = `${s.name}: ${formatTime(s.score)}`;
+        scoresList.appendChild(li);
+      });
+    }
+
+    function resetGame() {
+      gameRunning = false;
+      clearTimeout(inactivityTimer);
+      statusDisplay.textContent = "Restarted. Enter your name and press Start.";
+      timerDisplay.textContent = "";
+      nameInput.disabled = false;
+    }
+
+    showScores();
+  </script>
+</body>
+</html>
